@@ -97,7 +97,7 @@ A full second-order model was fitted, then reduced by removing non-significant t
 - Interaction x₁:x₃: not significant → removed
 - **Stopping criterion: Lack-of-Fit p = 0.066 > 0.05** (model structure adequate)
 
-**Note on Lack-of-Fit: After removing x₂ from the model, R reports a 
+>Note on Lack-of-Fit: After removing x₂ from the model, R reports a 
 > significant LoF (p << 0.05) — however, this is a statistical artifact of 
 > model reduction, not a genuine model failure. By removing x₂, points that 
 > differ only in x₂ are treated as replicates, inflating the Pure Error 
