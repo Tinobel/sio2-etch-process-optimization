@@ -189,25 +189,7 @@ Optimized:  Cpk = 1.70  →  in control, CAPABLE  ✓
 - Canonical analysis & ridge analysis
 - Backward model reduction with Lack-of-Fit stopping criterion
 
----
 
-## Repository Structure
-
-```
-├── simulation/
-│   └── process_simulator.py     # SiO₂ RIE process simulation (Python)
-├── doe/
-│   └── doe_analysis.R           # CCD design, RSM, optimization (R)
-├── spc/
-│   └── spc_workbook.xlsx        # IMR charts, capability indices (Excel)
-├── plots/
-│   ├── spc_phase1.png
-│   ├── rsm_heatmap.png
-│   └── spc_phase2.png
-└── README.md
-```
-
----
 
 ## Background & Motivation
 
