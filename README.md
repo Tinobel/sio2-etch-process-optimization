@@ -215,4 +215,4 @@ This project was developed to apply SPC and DoE methodology in a semiconductor F
 
 The simulation intentionally hides the true model parameters and optimum — reflecting real Fab conditions where the engineer must infer process behavior from experimental data alone.
 
-*Complementary coursework: DoE (Udemy), Statistical Process (accredited) Control (Udemy), Cleanroom Fundamentals & Semiconductor Technologies (Coursera).*
+*Complementary coursework: DoE (Udemy), Statistical Process Control (accredited) (Udemy), Cleanroom Fundamentals & Semiconductor Technologies (Coursera).*
