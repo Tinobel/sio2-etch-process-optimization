@@ -1,0 +1,165 @@
+#visulalize data
+str(DoE)
+# =============================================================
+
+# =============================================================
+install.packages("rsm")
+install.packages("readr")
+library(rsm)
+library(readr)
+
+#  ── 1. Daten einlesen ──────────────────────────────
+
+df <- read_csv("DoE.csv")
+colnames(df) <- c("x1","x2","x3","x4","y")
+
+# ── 2. Punkttypen klassifizieren (fix für α=1) ────
+# ordnet den Punkten die korrekte 'Einstellung' zu
+df$nonzero <- rowSums(df[, c("x1","x2","x3","x4")] != 0)
+df$point_type <- ifelse(df$nonzero == 0, "center",
+                      ifelse(df$nonzero == 1, "axial", "factorial"))
+cat("Punkttypen:\n")
+print(table(df$point_type))
+# Erwartung: factorial=16, axial=8, center=4
+
+# ── 3. SCHRITT 1: Curvature Test (nur Fakt. + Center) ──
+df_fc <- df[df$point_type != "axial", ]
+cat("\nAnzahl Punkte im Curvature-Test:", nrow(df_fc), "\n")
+# Erwartung: 20
+model_fo <- rsm(y ~ FO(x1, x2, x3, x4), data = df_fc)
+cat("\n── CURVATURE TEST (FO-Modell) ──\n")
+print(summary(model_fo))
+
+
+# da curvature signifikant ist werden jetzt noch die axialen Punkte generiert (praktisch sind sie schon vorhanden)
+
+
+# ── 4. SCHRITT 2: Volles CCD – Quadratisches Modell ──
+#  Alle 28 Punkte verwenden
+
+model_so <- rsm(y ~ SO(x1, x2, x3, x4), data = df)
+print(summary(model_so))
+
+model_so2 <- rsm(y ~ FO(x1,x2, x3, x4) + TWI(x1,x2,x3, x4) + PQ(x1,x3, x4), data = df)
+print(summary(model_so2))
+
+model_so3 <- rsm(y ~ FO(x1, x3, x4) +
+                   TWI(x1, x4) + TWI(x3, x4) +
+                   PQ(x1, x3, x4),
+                 data = df)
+summary(model_so3)
+
+
+#evtl. Parameter/Anteile die nicht signifikant sind hier Schritt für Schritt entfernen
+
+model_so_new <- rsm(y ~ FO(x1, x3, x4) +
+                      TWI(x1, x4) + TWI(x3, x4) +
+                      PQ(x1, x3, x4),
+                    data = df)
+print(summary(model_so_new))
+
+
+# ── 5. Kanonische Korrelation ─────────────────────────────────────
+canon <- canonical(model_so_new)
+cat("\n── CANONICAL ANALYSIS ──\n")
+cat("Stationärer Punkt (codiert):\n")
+print(round(canon$xs, 4))
+cat("\nEigenwerte:\n")
+print(round(canon$eigen$values, 4))
+ev <- canon$eigen$values
+cat("\nArt des stationären Punkts:",
+    ifelse(all(ev < 0), "MAXIMUM",
+           ifelse(all(ev > 0), "MINIMUM", "SATTELPUNKT")), "\n")
+
+# ── 6. Optimum innerhalb Grenzen ─────────────────────────────
+pred_fun <- function(x) {
+  newdata <- data.frame(x1=x[1], x2=x[2], x3=x[3], x4=x[4])
+  -predict(model_so_new, newdata)
+}
+
+x0 <- rep(0,4)
+
+opt <- optim(
+  par    = x0,
+  fn     = pred_fun,
+  method = "L-BFGS-B",
+  lower  = rep(-1, 4),
+  upper  = rep( 1, 4)
+)
+
+cat("\n── OPTIMUM (codiert) ──\n")
+cat("x1 (Bias_Power)      :", round(opt$par[1], 4), "\n")
+cat("x2 (Chamber_Pressure):", round(opt$par[2], 4), "\n")
+cat("x3 (RF_Power)        :", round(opt$par[3], 4), "\n")
+cat("x4 (CHF3_flow)       :", round(opt$par[4], 4), "\n")
+cat("Vorhergesagtes y     :", round(-opt$value,  4), "\n")
+
+# ── 7. Ergebnis der constrained optimization ─────────────────
+
+best <- list(
+  x1   = opt$par[1],
+  x2   = opt$par[2],
+  x3   = opt$par[3],
+  x4   = opt$par[4],
+  yhat = -opt$value
+)
+
+cat("\n── GEFUNDENES OPTIMUM (in bounds) ──\n")
+cat("x1:", round(best$x1, 4), "\n")
+cat("x2:", round(best$x2, 4), "\n")
+cat("x3:", round(best$x3, 4), "\n")
+cat("x4:", round(best$x4, 4), "\n")
+cat("y :", round(best$yhat, 4), "\n")
+
+# Prüfen ob Randlösung
+if(any(abs(unlist(best[1:4])) > 0.99)){
+  cat("\nWARNUNG: Optimum liegt am Rand des CCD.\n")
+}
+# ── 8. Konturplot ─────────────────────────────────────────────
+contour(model_so_new,
+        x3 ~ x4,
+        image = TRUE,
+        at    = list(x1 = best$x1, x2 = best$x2),
+        main  = "Responsefläche: RF_Power vs CHF3_flow\n(x1, x2 am Optimum fixiert)"
+)
+# ── Eckpunkte des CCD-Raums ─────────────────────────────
+
+grid <- expand.grid(
+  x1 = c(-1, 1),
+  x2 = c(-1, 1),
+  x3 = c(-1, 1),
+  x4 = c(-1, 1)
+)
+
+grid$yhat <- predict(model_so_new, grid)
+
+best_corner <- grid[which.max(grid$yhat), ]
+
+cat("\n── BESTER ECKPUNKT (±1 Grenzen) ──\n")
+print(best_corner)
+# Plausibilität, Prüft ob Maximum am Rand ist
+# ── 9. Rücktransformation ─────────────────────────────────────
+best <- list(
+  x1 = opt$par[1],
+  x2 = opt$par[2],
+  x3 = opt$par[3],
+  x4 = opt$par[4],
+  yhat = -opt$value
+)
+
+x1_lower <- 12.8;  x1_upper <- 50  # <- anpassen für jeden Durchlauf!
+x2_lower <- 15.9;     x2_upper <- 23.3   # <- anpassen für jeden Durchlauf!
+x3_lower <- 430.9;     x3_upper <- 500   # <- anpassen für jeden Durchlauf!
+x4_lower <- 135.6;     x4_upper <- 172   # <- anpassen für jeden Durchlauf!
+
+x1_real <- x1_lower + (best$x1 + 1) * (x1_upper - x1_lower) / 2
+x2_real <- x2_lower + (best$x2 + 1) * (x2_upper - x2_lower) / 2
+x3_real <- x3_lower + (best$x3 + 1) * (x3_upper - x3_lower) / 2
+x4_real <- x4_lower + (best$x4 + 1) * (x4_upper - x4_lower) / 2
+
+cat("\n── OPTIMUM IN REALEN PROZESSWERTEN ──\n")
+cat("Bias_Power       (x1):", round(x1_real, 1), "W\n")
+cat("Chamber_Pressure (x2):", round(x2_real, 1), "mTorr\n")
+cat("RF_Power         (x3):", round(x3_real, 1), "W\n")
+cat("CHF3_flow        (x4):", round(x4_real, 1), "sccm\n")
+cat("Vorhergesagtes y     :", round(best$yhat, 2), "\n")
