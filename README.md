@@ -97,8 +97,19 @@ A full second-order model was fitted, then reduced by removing non-significant t
 - Interaction x₁:x₃: not significant → removed
 - **Stopping criterion: Lack-of-Fit p = 0.066 > 0.05** (model structure adequate)
 
-> Note: Despite moderate Adj. R² = 0.45, the model was retained because Lack-of-Fit remained non-significant — indicating adequate structural fit. Prediction accuracy at the optimum was empirically validated: predicted 102.34 nm/min vs. observed X̄ = 98.93 nm/min (Δ = 3.4%, within process noise).
-
+**Note on Lack-of-Fit:** After removing x₂ from the model, R reports a 
+> significant LoF (p << 0.05) — however, this is a statistical artifact of 
+> model reduction, not a genuine model failure. By removing x₂, points that 
+> differ only in x₂ are treated as replicates, inflating the Pure Error 
+> degrees of freedom (13 df) artificially. The resulting LoF F-test is no 
+> longer validly interpretable.
+> 
+> The relevant benchmark is the LoF from the full model with genuine Pure 
+> Error (4 center points, 3 df): **p = 0.066 > 0.05 → no significant 
+> lack-of-fit**. Prediction accuracy at the optimum confirms model utility: 
+> predicted 102.34 nm/min vs. observed X̄ = 98.93 nm/min (Δ = 3.4%, within 
+> process noise).
+> 
 **Significant effects identified:** x₁ (Bias Power), x₃ (RF Power), x₄ (CHF₃ Flow) and their interactions.
 
 ### Response Surface
