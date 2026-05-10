@@ -1,7 +1,7 @@
 """
 Process Simulation – Response Surface Model
 ============================================
-Simuliert prozessnahe Fab-Messdaten mit versteckten Modellparametern.
+# Simulates process-realistic Fab measurement data with hidden model parameters
 R_true(x) = R_max - sum_i a_i*(xi-xi*)^2
            + sum_{i<j} b_ij*(xi-xi*)*(xj-xj*)
            + sum_{i<j<l} c_ijl*(xi-xi*)*(xj-xj*)*(xl-xl*)
@@ -35,11 +35,11 @@ C_SCALE_MAX = 0.03 * A_TOT   # max sum |c_ijl|
 # Optimum-Suchbereich (x* liegt in diesem Bereich)
 X_STAR_RANGES = [(10.0, 50.0), (5.0, 25.0), (250.0, 500.0), (70.0, 180.0)]
 FACTOR_NAMES = ["Bias_Power_W", "Chamber_Pressure_mTorr", "RF_Power_W", "CHF3_flow_sccm"]
-RUN_FILE = "runs.json"      # Datei mit Parametern
+RUN_FILE = "runs.json"      
 
 
 # ─────────────────────────────────────────────────────────────
-# 2) Zufallshilfen & Basis-Sampling
+# 2) Random seeds & base sampling
 # ─────────────────────────────────────────────────────────────
 def _rand_range(lo, hi):
     return np.random.uniform(lo, hi)
@@ -53,7 +53,7 @@ def _draw_sigma():
 
 
 # ─────────────────────────────────────────────────────────────
-# 3) Erzeugung der Modellkoeffizienten
+# 3) Generation of model coefficients
 # ─────────────────────────────────────────────────────────────
 def _gen_main_effects():
     """Haupteffekte a_i: 50% groß / 50% klein, Summe = A_TOT."""
@@ -102,7 +102,7 @@ def _gen_three_factor(a_sum):
 
 
 # ─────────────────────────────────────────────────────────────
-# 4) Erzeugung der unbekannten Optima x*
+# 4) Generation of unknown optimum x*
 # ─────────────────────────────────────────────────────────────
 def _gen_optima():
     return np.array([round(_rand_range(*r), 1) for r in X_STAR_RANGES])
@@ -111,7 +111,7 @@ def _gen_optima():
 
 
 # ─────────────────────────────────────────────────────────────
-# 5) Hinweisbereiche um x* (verschleiert)
+# 5) Hint ranges around x* (obfuscated)
 # ─────────────────────────────────────────────────────────────
 def _gen_hint_ranges(x_star):
     """
@@ -137,7 +137,7 @@ def _gen_hint_ranges(x_star):
      
 
 # ─────────────────────────────────────────────────────────────
-# 6) Berechnung R_true(x) – Modellkern
+# 6) Computation of R_true(x) – model core
 # ─────────────────────────────────────────────────────────────
 def _calc_r(x, a, b, c, x_star, sigma, add_noise=True):
     """
@@ -168,7 +168,7 @@ def _calc_r(x, a, b, c, x_star, sigma, add_noise=True):
 
 
 # ─────────────────────────────────────────────────────────────
-# 7) Run-Verwaltung der unbekannten Variablen (Vault) 
+# 7) Run management of hidden variables (Vault)
 # ─────────────────────────────────────────────────────────────
 def _serialize_run(run_data):
     """Konvertiert numpy-Typen für JSON."""
@@ -279,7 +279,7 @@ def reveal_run(run_id):
 
 
 # ─────────────────────────────────────────────────────────────
-# 8) Messung (einzeln oder Mehrfachmessung)
+# 8) Measurement (single or repeated)
 # ─────────────────────────────────────────────────────────────
 def measure(run_id, x, n=1, add_noise=True):
     """
@@ -321,7 +321,7 @@ def measure(run_id, x, n=1, add_noise=True):
         
 
 # ─────────────────────────────────────────────────────────────
-# 9) Daten in Excel einfügen lassen
+# 9) Data export to Excel
 # ─────────────────────────────────────────────────────────────
 
 def export_to_excel(results, filename="Control-Charts.xlsx", start_col=2, row=4, sheet=1):
@@ -365,7 +365,7 @@ def export_to_csv(results, filename="doe_data.csv"):
     
     
 # ─────────────────────────────────────────────────────────────
-# 11) Testen der Streu-Weite der Ober und Untergrenzen
+# 11) Testing the spread of upper and lower bounds
 # ─────────────────────────────────────────────────────────────
 # run_id, hints = create_run(run_id="Uebung1", persist=True)
 
